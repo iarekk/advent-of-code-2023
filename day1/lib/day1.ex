@@ -36,11 +36,16 @@ defmodule Day1 do
   38
   iex> Day1.str_to_number("treb7uchet")
   77
+  iex> Day1.str_to_number("two1nine")
+  29
+  iex> Day1.str_to_number("abcone2threexyz")
+  13
 
   """
   def str_to_number(str) do
     # IO.puts(digits)
-    symbols = str |> String.graphemes()
+    str_cleaned = clean_string(str)
+    symbols = str_cleaned |> String.graphemes()
     numbers = symbols |> Enum.filter(fn s -> s in digits() end)
 
     first = List.first(numbers) |> String.to_integer()
@@ -49,5 +54,62 @@ defmodule Day1 do
     first * 10 + last
   end
 
+  @doc """
+  Replaces string representations of digits with actual digits in the string.
+
+  ## Examples
+
+    iex> Day1.clean_string("two1nine")
+    "219"
+
+    iex> Day1.clean_string("abcone2threexyz")
+    "abc123xyz"
+
+  """
+  def clean_string(str) do
+    str
+    |> String.replace("one", "1")
+    |> String.replace("two", "2")
+    |> String.replace("three", "3")
+    |> String.replace("four", "4")
+    |> String.replace("five", "5")
+    |> String.replace("six", "6")
+    |> String.replace("seven", "7")
+    |> String.replace("eight", "8")
+    |> String.replace("nine", "9")
+  end
+
   defp digits, do: 0..9 |> Enum.to_list() |> Enum.map(&Integer.to_string(&1))
+
+  def lookups, do: ["one", "two"]
+  def lookup_map, do: %{"one" => "1", "two" => "2"}
+
+  def replace_lookahead(str) do
+    symbols = String.graphemes(str)
+
+    replaced_symbols = repl_rec([], symbols)
+
+    Enum.join(replaced_symbols)
+  end
+
+  def repl_rec(acc, []) do
+    IO.puts("repl_rec called: (#{acc}, [])")
+    word_in_acc = Enum.join(acc)
+
+    if(Map.has_key?(lookup_map(), word_in_acc)) do
+      [Map.get(lookup_map(), word_in_acc)]
+    else
+      acc
+    end
+  end
+
+  # acc has partial match on matches
+  def repl_rec([f | rem_acc] = acc, [next | remaining] = remstr) do
+    IO.puts("repl_rec called: (#{acc}, #{remstr})")
+
+    new_candidate_word = acc ++ [next]
+  end
+
+  # def repl_rec(acc, symbols) do
+  # end
 end
