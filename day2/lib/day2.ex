@@ -19,7 +19,8 @@ defmodule Day2 do
   def read_file(path) do
     File.stream!(path)
     |> Stream.map(&parse_game(&1))
-    |> Stream.map(&is_possible(&1))
+    |> Stream.map(&find_minimum_set(&1))
+    |> Stream.map(&find_power(&1))
     |> Enum.sum()
 
     # Enum.map(&IO.puts(&1))
@@ -31,21 +32,16 @@ defmodule Day2 do
   ## Examples
 
     iex> Day2.parse_game("Game 96: 8 blue, 9 red; 9 red, 10 blue; 5 blue, 1 green, 2 red; 2 blue, 2 red")
-    {
-      96,
-      [
-        %{"blue" => "8", "red" => "9"},
-        %{"blue" => "10", "red" => "9"},
-        %{"blue" => "5", "green" => "1", "red" => "2"},
-        %{"blue" => "2", "red" => "2"}
-      ]
-    }
+    [
+      %{"blue" => 8, "red" => 9},
+      %{"blue" => 10, "red" => 9},
+      %{"blue" => 5, "green" => 1, "red" => 2},
+      %{"blue" => 2, "red" => 2}
+    ]
+
   """
   def parse_game(str) do
-    [title, game_portion] = String.split(str, ":")
-
-    [_, num_str] = String.split(title)
-    num = String.to_integer(num_str)
+    [_, game_portion] = String.split(str, ":")
 
     game_records =
       game_portion
@@ -55,7 +51,7 @@ defmodule Day2 do
     # |> IO.inspect(label: "game recs")
 
     # game_records =
-    {num, game_records}
+    game_records
   end
 
   def parse_single_set(str) do
@@ -71,26 +67,16 @@ defmodule Day2 do
     {col, count |> String.to_integer()}
   end
 
-  def is_game_possible(sets, max_set) do
-    Enum.all?(sets, &is_set_possible(&1, max_set))
+  def find_minimum_set([first | remsets] = sets), do: find_minimum_set_rec(first, remsets)
+
+  def find_minimum_set_rec(acc, []), do: acc
+
+  def find_minimum_set_rec(acc, [set | rem]) do
+    new_acc = Map.merge(acc, set, fn _k, v1, v2 -> max(v1, v2) end)
+    find_minimum_set_rec(new_acc, rem)
   end
 
-  def is_set_possible(set, max_set) do
-    IO.puts("set: #{inspect(set)}, max set: #{inspect(max_set)}")
-
-    Enum.all?(Map.keys(set), fn colour ->
-      Map.get(set, colour, 0) <= Map.get(max_set, colour, :kaboom)
-    end)
-    |> IO.inspect(label: "is possible")
-  end
-
-  def available_cubes(), do: %{"red" => 12, "green" => 13, "blue" => 14}
-
-  def is_possible({game_number, sets}) do
-    if(is_game_possible(sets, available_cubes())) do
-      game_number
-    else
-      0
-    end
+  def find_power(min_set) do
+    min_set |> Map.keys() |> Enum.map(&Map.get(min_set, &1)) |> Enum.product()
   end
 end
