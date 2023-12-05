@@ -43,73 +43,60 @@ defmodule Day1 do
 
   """
   def str_to_number(str) do
-    # IO.puts(digits)
-    str_cleaned = clean_string(str)
-    symbols = str_cleaned |> String.graphemes()
-    numbers = symbols |> Enum.filter(fn s -> s in digits() end)
-
-    first = List.first(numbers) |> String.to_integer()
-    last = List.last(numbers) |> String.to_integer()
+    first_digit = find_first(str)
+    last_digit = find_last(str)
+    first = Map.get(lookup_map(), first_digit, first_digit) |> String.to_integer()
+    last = Map.get(lookup_map(), last_digit, last_digit) |> String.to_integer()
 
     first * 10 + last
   end
 
-  @doc """
-  Replaces string representations of digits with actual digits in the string.
-
-  ## Examples
-
-    iex> Day1.clean_string("two1nine")
-    "219"
-
-    iex> Day1.clean_string("abcone2threexyz")
-    "abc123xyz"
-
-  """
-  def clean_string(str) do
-    str
-    |> String.replace("one", "1")
-    |> String.replace("two", "2")
-    |> String.replace("three", "3")
-    |> String.replace("four", "4")
-    |> String.replace("five", "5")
-    |> String.replace("six", "6")
-    |> String.replace("seven", "7")
-    |> String.replace("eight", "8")
-    |> String.replace("nine", "9")
-  end
-
   defp digits, do: 0..9 |> Enum.to_list() |> Enum.map(&Integer.to_string(&1))
+  defp word_digits, do: ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+  defp all_digits, do: digits() ++ word_digits()
 
-  def lookups, do: ["one", "two"]
-  def lookup_map, do: %{"one" => "1", "two" => "2"}
+  def lookup_map,
+    do: %{
+      "one" => "1",
+      "two" => "2",
+      "three" => "3",
+      "four" => "4",
+      "five" => "5",
+      "six" => "6",
+      "seven" => "7",
+      "eight" => "8",
+      "nine" => "9"
+    }
 
-  def replace_lookahead(str) do
-    symbols = String.graphemes(str)
-
-    replaced_symbols = repl_rec([], symbols)
-
-    Enum.join(replaced_symbols)
+  def find_first(str) do
+    find_first_rec(str, starts_with_any_digit(str))
   end
 
-  def repl_rec(acc, []) do
-    IO.puts("repl_rec called: (#{acc}, [])")
-    word_in_acc = Enum.join(acc)
+  def find_first_rec("", last_match), do: last_match
 
-    if(Map.has_key?(lookup_map(), word_in_acc)) do
-      [Map.get(lookup_map(), word_in_acc)]
-    else
-      acc
-    end
+  def find_first_rec(str, :nope) do
+    new_string = String.slice(str, 1..-1)
+    find_first_rec(new_string, starts_with_any_digit(new_string))
   end
 
-  # acc has partial match on matches
-  def repl_rec([f | rem_acc] = acc, [next | remaining] = remstr) do
-    IO.puts("repl_rec called: (#{acc}, #{remstr})")
+  def find_first_rec(_, match), do: match
 
-    new_candidate_word = acc ++ [next]
+  def starts_with_any_digit(str) do
+    all_digits() |> Enum.find(:nope, fn digit -> String.starts_with?(str, digit) end)
   end
 
-  # def repl_rec(acc, symbols) do
-  # end
+  def find_last(str), do: find_last_rec(str, ends_with_any_digit(str))
+
+  def find_last_rec("", last_match), do: last_match
+
+  def find_last_rec(str, :nope) do
+    new_string = String.slice(str, 0, String.length(str) - 1)
+    find_last_rec(new_string, ends_with_any_digit(new_string))
+  end
+
+  def find_last_rec(_, match), do: match
+
+  def ends_with_any_digit(str) do
+    all_digits() |> Enum.find(:nope, fn digit -> String.ends_with?(str, digit) end)
+  end
 end
