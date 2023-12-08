@@ -19,9 +19,22 @@ defmodule Day4 do
   def read_file(path) do
     File.stream!(path)
     |> Stream.map(&parse_card(&1))
-    |> Stream.map(&IO.inspect(&1))
+    # |> Stream.map(&IO.inspect(&1))
     |> Stream.map(&compute_winnings(&1))
+    |> Stream.map(&IO.inspect(&1, label: "after computing match count"))
+    |> Enum.reverse()
+    |> Enum.scan([], &tally_up(&1, &2))
+    |> Enum.reverse()
+
+    # |> IO.inspect(label: "after scan")
+    |> Enum.at(0)
     |> Enum.sum()
+  end
+
+  def tally_up(current, tail) do
+    IO.puts("c: #{current}, t: #{inspect(tail)}")
+    won_cards = 1 + (Enum.take(tail, current) |> Enum.sum())
+    [won_cards | tail]
   end
 
   def parse_card(str) do
@@ -32,11 +45,6 @@ defmodule Day4 do
   end
 
   def compute_winnings({winning_numbers, card_numbers}) do
-    win_count = Enum.filter(card_numbers, &(&1 in winning_numbers)) |> Enum.count()
-    make_win_number(win_count)
+    Enum.filter(card_numbers, &(&1 in winning_numbers)) |> Enum.count()
   end
-
-  def make_win_number(0), do: 0
-  def make_win_number(1), do: 1
-  def make_win_number(k), do: :math.pow(2, k - 1) |> round
 end
