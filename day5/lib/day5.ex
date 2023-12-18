@@ -36,11 +36,14 @@ defmodule Day5 do
         [],
         fn x, acc ->
           case x do
-            "\n" -> {:cont, acc, []}
-            _ -> {:cont, acc ++ [String.trim(x)]}
+            "\n" -> {:cont, Enum.reverse(acc), []}
+            _ -> {:cont, [String.trim(x) | acc]}
           end
         end,
-        fn _ -> {:cont, []} end
+        fn
+          [] -> {:cont, []}
+          acc -> {:cont, Enum.reverse(acc), []}
+        end
       )
       # |> Stream.map(&(&1 |> IO.inspect(label: "line")))
       |> Stream.map(&parse_map(&1))
@@ -48,6 +51,8 @@ defmodule Day5 do
       |> Map.new()
 
     {seeds |> IO.inspect(label: "seeds"), final_map |> IO.inspect(label: "final map")}
+
+    seeds |> Enum.map(&Day5.seed_to_location(&1, final_map)) |> Enum.min()
   end
 
   def parse_seeds("seeds: " <> seed_str) do
@@ -68,5 +73,33 @@ defmodule Day5 do
       source_range_start: source_range_start,
       range_length: range_length
     ]
+  end
+
+  def transform_number(number, []), do: number
+
+  def transform_number(number, [
+        [
+          dest_range_start: dest_range_start,
+          source_range_start: source_range_start,
+          range_length: range_length
+        ]
+        | _
+      ])
+      when number >= source_range_start and number < source_range_start + range_length do
+    offset = number - source_range_start
+    dest_range_start + offset
+  end
+
+  def transform_number(number, [_ | rest]), do: transform_number(number, rest)
+
+  def seed_to_location(seed_number, mega_map) do
+    seed_number
+    |> transform_number(mega_map["seed-to-soil"])
+    |> transform_number(mega_map["soil-to-fertilizer"])
+    |> transform_number(mega_map["fertilizer-to-water"])
+    |> transform_number(mega_map["water-to-light"])
+    |> transform_number(mega_map["light-to-temperature"])
+    |> transform_number(mega_map["temperature-to-humidity"])
+    |> transform_number(mega_map["humidity-to-location"])
   end
 end
