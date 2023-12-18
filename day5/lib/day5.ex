@@ -52,7 +52,22 @@ defmodule Day5 do
 
     {seeds |> IO.inspect(label: "seeds"), final_map |> IO.inspect(label: "final map")}
 
-    seeds |> Enum.map(&Day5.seed_to_location(&1, final_map)) |> Enum.min()
+    seeds_ranged = update_for_part2(seeds) |> IO.inspect(label: "seed range")
+
+    seeds_ranged
+    |> Enum.map(&process_range(&1, final_map))
+    |> IO.inspect(label: "intermediate mins", charlists: :as_lists)
+    |> Enum.min()
+
+    # 100
+    # seeds_ranged |> Enum.map(&Day5.seed_to_location(&1, final_map)) |> Enum.min()
+  end
+
+  def process_range(range, map) do
+    range
+    |> IO.inspect(label: "processing range")
+    |> Stream.map(&seed_to_location(&1, map))
+    |> Enum.min()
   end
 
   def parse_seeds("seeds: " <> seed_str) do
@@ -101,5 +116,13 @@ defmodule Day5 do
     |> transform_number(mega_map["light-to-temperature"])
     |> transform_number(mega_map["temperature-to-humidity"])
     |> transform_number(mega_map["humidity-to-location"])
+  end
+
+  # The values on the initial seeds: line come in pairs.
+  # Within each pair, the first value is the start of the range and the second value is the length of the range.
+  def update_for_part2([]), do: []
+
+  def update_for_part2([start, len | rem]) do
+    [start..(start + len - 1) | update_for_part2(rem)]
   end
 end
