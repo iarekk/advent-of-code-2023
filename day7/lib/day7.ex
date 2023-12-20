@@ -17,6 +17,20 @@ defmodule Day7 do
     :high_card => 6
   }
 
+  def solve_part1(file_path) do
+    File.stream!(file_path)
+    |> Stream.map(&parse_bid/1)
+    |> Enum.sort(fn {h1, _}, {h2, _} -> compare_hands(h1, h2) in [:eq, :lt] end)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{_hand, bid}, i} -> bid * i end)
+    |> Enum.sum()
+  end
+
+  defp parse_bid(str) do
+    [hand, bid] = String.split(str, " ")
+    {hand, String.to_integer(bid |> String.trim())}
+  end
+
   @doc """
   Compares two cards.
 
