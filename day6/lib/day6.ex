@@ -49,4 +49,20 @@ defmodule Day6 do
 
     distance
   end
+
+  def solve_part2(file_path) do
+    race = get_input_part2(file_path)
+    ways = find_ways_to_beat(race)
+    ways
+  end
+
+  def get_input_part2(file_path) do
+    ["Time:" <> time_str, "Distance:" <> dist_str] =
+      File.read!(file_path) |> IO.inspect(label: "file content") |> String.split("\n")
+
+    time = time_str |> String.replace(~r/\s+/, "") |> String.to_integer()
+    distance = dist_str |> String.replace(~r/\s+/, "") |> String.to_integer()
+
+    {time, distance}
+  end
 end
