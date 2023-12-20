@@ -95,7 +95,7 @@ defmodule Day7 do
   end
 
   defp classify_hand([_]), do: :five_of_kind
-  defp classify_hand([[_], [_], [_], [_], [_]]), do: :high_card
+  defp classify_hand([_, _, _, _, _]), do: :high_card
   defp classify_hand([l1, _]) when length(l1) == 4, do: :four_of_kind
   defp classify_hand([_, _]), do: :full_house
   defp classify_hand([l1, _, _]) when length(l1) == 3, do: :three_of_kind
