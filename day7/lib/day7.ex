@@ -3,7 +3,7 @@ defmodule Day7 do
   Documentation for `Day7`.
   """
 
-  @cards ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+  @cards ["A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"]
 
   @cards_positions Enum.with_index(@cards) |> Map.new()
 
@@ -98,7 +98,7 @@ defmodule Day7 do
 
     # |> IO.inspect(label: "chunks")
 
-    classify_hand(chunks)
+    classify_hand(chunks |> attach_jokers())
     # AAAAA - AAAAA - all same
     # AA8AA - AAAA 8 - four of a kind
     # 23332 - 333 22 - full house (3+2)
@@ -107,6 +107,22 @@ defmodule Day7 do
     # A23A4 - AA 4 3 2
     # 23456 - 6 5 4 3 2
   end
+
+  def attach_jokers(chunks) do
+    joker_chunk = Enum.find(chunks, :no_jokers, &is_joker_chunk/1)
+
+    case joker_chunk do
+      :no_jokers -> chunks
+      j_chunk -> attach_jokers_p(j_chunk, chunks |> Enum.reject(&is_joker_chunk/1))
+    end
+  end
+
+  # only jokers
+  defp attach_jokers_p(j_chunk, []), do: [j_chunk]
+  defp attach_jokers_p(j_chunk, [longest_chunk | rem]), do: [j_chunk ++ longest_chunk | rem]
+
+  defp is_joker_chunk(["J" | _]), do: true
+  defp is_joker_chunk(_), do: false
 
   defp classify_hand([_]), do: :five_of_kind
   defp classify_hand([_, _, _, _, _]), do: :high_card
