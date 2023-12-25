@@ -10,4 +10,10 @@ defmodule Day10 do
     |> Enum.with_index()
     |> Enum.map(fn {sym, col_index} -> {{row_index, col_index}, sym} end)
   end
+
+  def find_start(matrix) do
+    [{x, y}] = Map.filter(matrix, fn {_, sym} -> sym == "S" end) |> Map.keys()
+
+    {x, y}
+  end
 end
