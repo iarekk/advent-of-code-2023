@@ -1,18 +1,13 @@
 defmodule Day10 do
-  @moduledoc """
-  Documentation for `Day10`.
-  """
+  def read_file(file_path) do
+    File.stream!(file_path) |> Stream.with_index() |> Stream.flat_map(&parse_line/1) |> Map.new()
+  end
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Day10.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def parse_line({str, row_index}) do
+    str
+    |> String.trim()
+    |> String.graphemes()
+    |> Enum.with_index()
+    |> Enum.map(fn {sym, col_index} -> {{row_index, col_index}, sym} end)
   end
 end
