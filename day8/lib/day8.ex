@@ -16,9 +16,6 @@ defmodule Day8 do
     :world
   end
 
-  @start_node "AAA"
-  @end_node "ZZZ"
-
   def read_file(file_path) do
     fstream = File.stream!(file_path)
 
@@ -34,20 +31,47 @@ defmodule Day8 do
 
     commands = path |> String.graphemes() |> Stream.cycle()
 
-    commands |> Enum.reduce_while({@start_node, 0, tree}, &perform_step/2)
+    # commands |> Enum.reduce_while({@start_node, 0, tree}, &perform_step/2)
+
+    start_nodes =
+      tree |> Map.keys() |> Enum.filter(&is_start_node?/1) |> IO.inspect(label: "start nodes")
+
+    commands |> Enum.reduce_while({start_nodes, 0, tree}, &perform_step/2)
   end
 
-  def perform_step(_, {@end_node, step_count, _}), do: {:halt, step_count}
+  def find_length_for_start_node(command_stream, start_node, tree) do
+    command_stream |> Enum.reduce_while({start_node, 0, tree}, &perform_step/2)
+  end
 
-  def perform_step(command, {node_key, step_count, tree}) do
-    next_node_key =
-      get_next_node(command, tree[node_key])
+  def is_start_node?(str) do
+    [_, _, last] = str |> String.graphemes()
 
-    if(rem(step_count, 1000) == 0) do
-      IO.puts("steps: #{step_count} node: #{node_key} command: #{command} next: #{next_node_key}")
+    last == "A"
+  end
+
+  def is_end_node?(str) do
+    [_, _, last] = str |> String.graphemes()
+
+    last == "Z"
+  end
+
+  #  def perform_step(_, {node, step_count, _}) when is_end_step(node), do: {:halt, step_count}
+
+  def perform_step(command, {node_keys, step_count, tree}) do
+    if(Enum.all?(node_keys, &is_end_node?/1)) do
+      {:halt, step_count}
+    else
+      next_node_keys =
+        Enum.map(node_keys, fn nkey -> get_next_node(command, tree[nkey]) end)
+
+      if(rem(step_count, 1_000_000) == 0) do
+        IO.puts(
+          "steps: #{step_count} nodes: #{inspect(node_keys)} command: #{command} next: #{inspect(next_node_keys)}"
+        )
+      end
+
+      {:cont, {next_node_keys, step_count + 1, tree}}
     end
-
-    {:cont, {next_node_key, step_count + 1, tree}}
   end
 
   def get_next_node("R", {_, node_right}), do: node_right
