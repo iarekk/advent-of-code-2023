@@ -34,9 +34,24 @@ defmodule Day8 do
 
     commands = path |> String.graphemes() |> Stream.cycle()
 
-    steps = navigate_tree(commands, tree, @start_node, 0)
+    commands |> Enum.reduce_while({@start_node, 0, tree}, &perform_step/2)
 
-    steps
+    # steps = navigate_tree(commands, tree, @start_node, 0)
+
+    # steps
+  end
+
+  def perform_step(_, {@end_node, step_count, _}), do: {:halt, step_count}
+
+  def perform_step(command, {node_key, step_count, tree}) do
+    next_node_key =
+      get_next_node(command, tree[node_key])
+
+    if(rem(step_count, 1000) == 0) do
+      IO.puts("steps: #{step_count} node: #{node_key} command: #{command} next: #{next_node_key}")
+    end
+
+    {:cont, {next_node_key, step_count + 1, tree}}
   end
 
   # def navigate_tree(_, _, _, 280), do: 20
