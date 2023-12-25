@@ -16,4 +16,13 @@ defmodule Day10 do
 
     {x, y}
   end
+
+  def move({x, y}, :north), do: {x - 1, y}
+  def move({x, y}, :south), do: {x + 1, y}
+  def move({x, y}, :west), do: {x, y - 1}
+  def move({x, y}, :east), do: {x, y + 1}
+
+  def is_valid_coord?({x, y}, num_cols, num_rows) do
+    x >= 0 and y >= 0 and x < num_rows and y < num_cols
+  end
 end
