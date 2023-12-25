@@ -22,6 +22,26 @@ defmodule Day9 do
     input_lines |> Enum.map(&find_next_value/1) |> Enum.sum()
   end
 
+  def solve_part_2(file_path) do
+    input_lines = read_file(file_path)
+
+    input_lines |> Enum.map(&find_prev_value/1) |> Enum.sum()
+  end
+
+  def find_prev_value(number_list) do
+    derivatives = find_derivatives(number_list, [])
+
+    find_prev_value(0, derivatives)
+  end
+
+  def find_prev_value(delta, []), do: delta
+
+  def find_prev_value(delta, [list | rem]) do
+    [a | _] = list
+
+    find_prev_value(a - delta, rem)
+  end
+
   def find_next_value(number_list) do
     derivatives = find_derivatives(number_list, [])
 
