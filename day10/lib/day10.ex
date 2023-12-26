@@ -17,6 +17,15 @@ defmodule Day10 do
     {x, y}
   end
 
+  def find_rows_cols_count(matrix) do
+    keys = Map.keys(matrix)
+
+    keys_x = Enum.map(keys, fn {x, _} -> x end)
+    keys_y = Enum.map(keys, fn {_, y} -> y end)
+
+    {Enum.max(keys_x) + 1, Enum.max(keys_y) + 1}
+  end
+
   def move({x, y}, :north), do: {x - 1, y}
   def move({x, y}, :south), do: {x + 1, y}
   def move({x, y}, :west), do: {x, y - 1}
@@ -48,7 +57,7 @@ defmodule Day10 do
   def connections("F"), do: [:south, :east]
   def connections(_), do: []
 
-  def are_connected({x1, y1}, sym1, {x2, y2}, sym2) do
+  def are_connected_p({x1, y1}, sym1, {x2, y2}, sym2) do
     # direction point1 to point2
     direction1 = direction(x2 - x1, y2 - y1) |> IO.inspect(label: "direction 1 -> 2")
 
@@ -59,5 +68,9 @@ defmodule Day10 do
     connections2 = connections(sym2) |> IO.inspect(label: "connections 2")
 
     Enum.member?(connections1, direction1) and Enum.member?(connections2, direction2)
+  end
+
+  def are_connected({x1, y1}, {x2, y2}, matrix) do
+    are_connected_p({x1, y1}, matrix[{x1, y1}], {x2, y2}, matrix[{x2, y2}])
   end
 end
