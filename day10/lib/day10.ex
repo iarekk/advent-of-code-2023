@@ -171,26 +171,30 @@ defmodule Day10 do
     {start, first_forbidden_direction, stop, s_point} = establish_start(matrix)
 
     # step list including the 'S' point
-    step_list =
-      follow_path(start, first_forbidden_direction, stop, [s_point], matrix)
-      |> IO.inspect(label: "step list")
+    step_list = follow_path(start, first_forbidden_direction, stop, [s_point], matrix)
+    # |> IO.inspect(label: "step list")
 
     s_symbol = determine_s_point_shape(s_point, [start, stop])
 
-    updated_matrix = %{matrix | s_point => s_symbol} |> IO.inspect(label: "new matrix")
+    updated_matrix = %{matrix | s_point => s_symbol}
+    # |> IO.inspect(label: "new matrix")
 
     max_row =
-      Enum.map(step_list, &(&1 |> elem(0))) |> IO.inspect(label: "step rows") |> Enum.max()
+      Enum.map(step_list, &(&1 |> elem(0)))
+      # |> IO.inspect(label: "step rows")
+      |> Enum.max()
 
     max_col =
-      Enum.map(step_list, &(&1 |> elem(1))) |> IO.inspect(label: "step cols") |> Enum.max()
+      Enum.map(step_list, &(&1 |> elem(1)))
+      # |> IO.inspect(label: "step cols")
+      |> Enum.max()
 
     0..max_row |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_list)) |> Enum.sum()
   end
 
   def horizontal_scan(row_number, max_col, matrix, loop_definition) do
     scan_step(false, {row_number, 0}, :none, {matrix, loop_definition, max_col}, 0)
-    |> IO.inspect(label: "found on row #{row_number}")
+    # |> IO.inspect(label: "found on row #{row_number}")
   end
 
   def scan_step(_, {_, max_col}, _, {_, _, max_col}, acc), do: acc
@@ -205,9 +209,9 @@ defmodule Day10 do
     sym =
       matrix[{row_index, col_index}]
 
-    IO.puts(
-      "Scan Step #{inspect({row_index, col_index})}. Is inside: #{is_inside?}. Acc: #{acc}. Sym: #{sym}"
-    )
+    # IO.puts(
+    #   "Scan Step #{inspect({row_index, col_index})}. Is inside: #{is_inside?}. Acc: #{acc}. Sym: #{sym}"
+    # )
 
     on_loop? = Enum.member?(loop_def, {row_index, col_index})
 
@@ -249,22 +253,33 @@ defmodule Day10 do
 
   # not on the loop
   def should_change?(false, _, _, _), do: false
-  # found pipe on the loop
+  # found pipe on the loop, means we're crossing the boundary
   def should_change?(true, true, _, _), do: true
 
+  # going left to right, we should hit a corner or a vertical pipe first, so this should be impossible
   def should_change?(true, false, :none, :none),
-    do: raise("on loop, not a pipe, not a corner, haven't seen a corner, should be impossible")
+    do:
+      raise(
+        "on the loop, not a vertical pipe, not a corner, haven't seen a corner, should be impossible"
+      )
 
-  def should_change?(true, false, :up, :up), do: false
-  def should_change?(true, false, :down, :down), do: false
+  # rounding the corner with the same direction (e.g. L---J, so we don't cross the loop boundary)
+  def should_change?(true, false, dir, dir) when dir in [:up, :down], do: false
+
+  # we've traversed past opposite corners (e.g. L---7), which means we cross the loop boundary
   def should_change?(true, false, :up, :down), do: true
   def should_change?(true, false, :down, :up), do: true
+
+  # on the loop, not a vertical pipe, and first time we're seeing a corner
+  # not changing direction, but the corner will be remembered through the `check_for_corner` call
   def should_change?(true, false, :down, :none), do: false
   def should_change?(true, false, :up, :none), do: false
+
+  # on the loop, not a vertical pipe, and not a corner - we're walking a horizontal boundary (somewhere in the middle of L---J)
   def should_change?(true, false, :none, :down), do: false
   def should_change?(true, false, :none, :up), do: false
 
-  # reset corners after seeing 2
+  # reset corners after seeing two consecutive corners
   def check_for_corner(cur, :none), do: cur
   def check_for_corner(:none, prev), do: prev
   def check_for_corner(cur, prev) when cur in [:up, :down] and prev in [:up, :down], do: :none
