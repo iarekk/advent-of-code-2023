@@ -79,41 +79,51 @@ defmodule Day10 do
     connects_to?({x1, y1}, {x2, y2}, matrix) and connects_to?({x2, y2}, {x1, y1}, matrix)
   end
 
-  def connects_to?({x1, y1}, {x2, y2}, matrix) do
-    connections1 = connections(matrix[{x1, y1}])
-    direction1to2 = direction(x2 - x1, y2 - y1)
+  def connects_to?(point1, point2, matrix) do
+    connections1 = connections(matrix[point1])
+    direction1to2 = point_direction(point1, point2)
     is_connected?(direction1to2, connections1)
   end
 
-  def neighbours({x, y}, directions, matrix) do
-    Enum.map(directions, &move({x, y}, &1)) |> Enum.filter(&is_valid_coord?(&1, matrix))
+  def point_direction({x1, y1}, {x2, y2}) do
+    direction(x2 - x1, y2 - y1)
   end
 
-  def connected_neighbours({x, y}, directions, matrix) do
-    neighbours({x, y}, directions, matrix) |> Enum.filter(&are_connected?({x, y}, &1, matrix))
+  def neighbours(point, directions, matrix) do
+    Enum.map(directions, &move(point, &1)) |> Enum.filter(&is_valid_coord?(&1, matrix))
   end
 
-  def make_step({x, y}, arrived_from, matrix) do
+  def connected_neighbours(point, directions, matrix) do
+    neighbours(point, directions, matrix) |> Enum.filter(&are_connected?(point, &1, matrix))
+  end
+
+  def make_step(point, arrived_from, matrix) do
     directions = @directions -- [arrived_from]
-    [next] = connected_neighbours({x, y}, directions, matrix)
+    [next] = connected_neighbours(point, directions, matrix)
     next
   end
 
-  def follow_path({x, y}, forbidden_direction, {stop_x, stop_y}, path_so_far, matrix) do
-    {x_new, y_new} =
-      make_step({x, y}, forbidden_direction, matrix)
+  def follow_path(
+        current_point,
+        forbidden_direction,
+        {stop_x, stop_y} = stop_point,
+        path_so_far,
+        matrix
+      ) do
+    new_point =
+      make_step(current_point, forbidden_direction, matrix)
 
-    if({x_new, y_new} == {stop_x, stop_y}) do
-      [{x_new, y_new}, {x, y} | path_so_far]
+    if(new_point == stop_point) do
+      [new_point, current_point | path_so_far]
     else
       new_forbidden_direction =
-        direction(x - x_new, y - y_new)
+        point_direction(new_point, current_point)
 
       follow_path(
-        {x_new, y_new},
+        new_point,
         new_forbidden_direction,
         {stop_x, stop_y},
-        [{x, y} | path_so_far],
+        [current_point | path_so_far],
         matrix
       )
     end
