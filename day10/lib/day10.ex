@@ -34,7 +34,7 @@ defmodule Day10 do
   end
 
   def find_start(matrix) do
-    [{x, y}] = Map.filter(matrix, fn {_, sym} -> sym == @start_symbol end) |> Map.keys()
+    {{x, y}, _} = Enum.find(matrix, fn {_, sym} -> sym == @start_symbol end)
 
     {x, y}
   end
