@@ -75,8 +75,8 @@ defmodule Day10 do
     Enum.member?(connections, direction)
   end
 
-  def are_connected?({x1, y1}, {x2, y2}, matrix) do
-    connects_to?({x1, y1}, {x2, y2}, matrix) and connects_to?({x2, y2}, {x1, y1}, matrix)
+  def are_connected?(point1, point2, matrix) do
+    connects_to?(point1, point2, matrix) and connects_to?(point2, point1, matrix)
   end
 
   def connects_to?(point1, point2, matrix) do
@@ -103,43 +103,38 @@ defmodule Day10 do
     next
   end
 
+  def follow_path(stop_point, _, stop_point, path_so_far, _), do: [stop_point | path_so_far]
+
   def follow_path(
         current_point,
         forbidden_direction,
-        {stop_x, stop_y} = stop_point,
+        stop_point,
         path_so_far,
         matrix
       ) do
     new_point =
       make_step(current_point, forbidden_direction, matrix)
 
-    if(new_point == stop_point) do
-      [new_point, current_point | path_so_far]
-    else
-      new_forbidden_direction =
-        point_direction(new_point, current_point)
+    # no going back to current_point
+    new_forbidden_direction = point_direction(new_point, current_point)
 
-      follow_path(
-        new_point,
-        new_forbidden_direction,
-        {stop_x, stop_y},
-        [current_point | path_so_far],
-        matrix
-      )
-    end
+    follow_path(
+      new_point,
+      new_forbidden_direction,
+      stop_point,
+      [current_point | path_so_far],
+      matrix
+    )
   end
 
   def establish_start(matrix) do
-    {s_x, s_y} = find_start(matrix)
-    all_neighbours = neighbours({s_x, s_y}, @directions, matrix)
+    s_point = find_start(matrix)
+    all_neighbours = neighbours(s_point, @directions, matrix)
 
-    [start, stop] = Enum.filter(all_neighbours, &connects_to?(&1, {s_x, s_y}, matrix))
+    [start_point, stop_point] = Enum.filter(all_neighbours, &connects_to?(&1, s_point, matrix))
 
-    {start_x, start_y} = start
+    first_prohibited_direction = point_direction(start_point, s_point)
 
-    first_prohibited_direction =
-      direction(s_x - start_x, s_y - start_y)
-
-    {start, first_prohibited_direction, stop, {s_x, s_y}}
+    {start_point, first_prohibited_direction, stop_point, s_point}
   end
 end
