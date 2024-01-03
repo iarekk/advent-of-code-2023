@@ -1,6 +1,18 @@
 defmodule Day10 do
   @start_symbol "S"
   @directions [:north, :west, :south, :east]
+  @symbol_types [
+    "|",
+    "-",
+    "L",
+    "J",
+    "7",
+    "F"
+  ]
+
+  @up_corners ["L", "J"]
+  @down_corners ["7", "F"]
+  @vpipe "|"
 
   def read_file(file_path) do
     File.stream!(file_path)
@@ -15,7 +27,9 @@ defmodule Day10 do
     {start, first_forbidden_direction, stop, _} = establish_start(matrix)
 
     # step list excluding the 'S' point
-    step_list = follow_path(start, first_forbidden_direction, stop, [], matrix)
+    step_list =
+      follow_path(start, first_forbidden_direction, stop, [], matrix)
+      |> IO.inspect(label: "step_list")
 
     answer = determine_furthest_step_count(step_list |> length)
 
@@ -137,4 +151,121 @@ defmodule Day10 do
 
     {start_point, first_prohibited_direction, stop_point, s_point}
   end
+
+  def determine_s_point_shape(s_point, [start_point, stop_point]) do
+    direction1 = point_direction(s_point, start_point)
+    direction2 = point_direction(s_point, stop_point)
+
+    Enum.find(@symbol_types, &matches_directions?(&1, direction1, direction2))
+  end
+
+  def matches_directions?(symbol, direction1, direction2) do
+    conns = connections(symbol)
+
+    Enum.member?(conns, direction1) and Enum.member?(conns, direction2)
+  end
+
+  def solve_part_2(file_path) do
+    matrix = read_file(file_path)
+
+    {start, first_forbidden_direction, stop, s_point} = establish_start(matrix)
+
+    # step list including the 'S' point
+    step_list =
+      follow_path(start, first_forbidden_direction, stop, [s_point], matrix)
+      |> IO.inspect(label: "step list")
+
+    s_symbol = determine_s_point_shape(s_point, [start, stop])
+
+    updated_matrix = %{matrix | s_point => s_symbol} |> IO.inspect(label: "new matrix")
+
+    max_row =
+      Enum.map(step_list, &(&1 |> elem(0))) |> IO.inspect(label: "step rows") |> Enum.max()
+
+    max_col =
+      Enum.map(step_list, &(&1 |> elem(1))) |> IO.inspect(label: "step cols") |> Enum.max()
+
+    0..max_row |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_list)) |> Enum.sum()
+  end
+
+  def horizontal_scan(row_number, max_col, matrix, loop_definition) do
+    scan_step(false, {row_number, 0}, :none, {matrix, loop_definition, max_col}, 0)
+    |> IO.inspect(label: "found on row #{row_number}")
+  end
+
+  def scan_step(_, {_, max_col}, _, {_, _, max_col}, acc), do: acc
+
+  def scan_step(
+        is_inside?,
+        {row_index, col_index},
+        last_seen_corner_point,
+        {matrix, loop_def, max_col},
+        acc
+      ) do
+    sym =
+      matrix[{row_index, col_index}]
+
+    IO.puts(
+      "Scan Step #{inspect({row_index, col_index})}. Is inside: #{is_inside?}. Acc: #{acc}. Sym: #{sym}"
+    )
+
+    on_loop? = Enum.member?(loop_def, {row_index, col_index})
+
+    # TODO
+    new_inside? =
+      if should_change_sides?(last_seen_corner_point, sym, on_loop?),
+        do: not is_inside?,
+        else: is_inside?
+
+    # TODO
+    new_corner =
+      if on_loop?,
+        do: check_for_corner(get_corner_direction(sym), last_seen_corner_point),
+        else: last_seen_corner_point
+
+    # TODO
+    new_acc = if is_inside? and not on_loop?, do: acc + 1, else: acc
+
+    scan_step(
+      new_inside?,
+      {row_index, col_index + 1},
+      new_corner,
+      {matrix, loop_def, max_col},
+      new_acc
+    )
+  end
+
+  def should_change_sides?(last_seen_corner_direction, sym, is_on_loop?) do
+    is_pipe? = sym == @vpipe
+
+    corner_direction = get_corner_direction(sym)
+
+    should_change?(is_on_loop?, is_pipe?, corner_direction, last_seen_corner_direction)
+  end
+
+  def get_corner_direction(sym) when sym in @up_corners, do: :up
+  def get_corner_direction(sym) when sym in @down_corners, do: :down
+  def get_corner_direction(_), do: :none
+
+  # not on the loop
+  def should_change?(false, _, _, _), do: false
+  # found pipe on the loop
+  def should_change?(true, true, _, _), do: true
+
+  def should_change?(true, false, :none, :none),
+    do: raise("on loop, not a pipe, not a corner, haven't seen a corner, should be impossible")
+
+  def should_change?(true, false, :up, :up), do: false
+  def should_change?(true, false, :down, :down), do: false
+  def should_change?(true, false, :up, :down), do: true
+  def should_change?(true, false, :down, :up), do: true
+  def should_change?(true, false, :down, :none), do: false
+  def should_change?(true, false, :up, :none), do: false
+  def should_change?(true, false, :none, :down), do: false
+  def should_change?(true, false, :none, :up), do: false
+
+  # reset corners after seeing 2
+  def check_for_corner(cur, :none), do: cur
+  def check_for_corner(:none, prev), do: prev
+  def check_for_corner(cur, prev) when cur in [:up, :down] and prev in [:up, :down], do: :none
 end
