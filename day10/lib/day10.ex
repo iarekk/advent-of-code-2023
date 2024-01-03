@@ -27,9 +27,9 @@ defmodule Day10 do
     {start, first_forbidden_direction, stop, _} = establish_start(matrix)
 
     # step list excluding the 'S' point
-    step_list =
-      follow_path(start, first_forbidden_direction, stop, [], matrix)
-      |> IO.inspect(label: "step_list")
+    step_list = follow_path(start, first_forbidden_direction, stop, [], matrix)
+
+    # |> IO.inspect(label: "step_list")
 
     answer = determine_furthest_step_count(step_list |> length)
 
@@ -107,15 +107,22 @@ defmodule Day10 do
     Enum.map(directions, &move(point, &1)) |> Enum.filter(&is_valid_coord?(&1, matrix))
   end
 
-  def connected_neighbours(point, directions, matrix) do
-    neighbours(point, directions, matrix) |> Enum.filter(&are_connected?(point, &1, matrix))
+  def make_step(point, arrived_from, matrix) do
+    get_connected_neighbour(point, arrived_from, matrix[point])
   end
 
-  def make_step(point, arrived_from, matrix) do
-    directions = MapSet.delete(@directions, arrived_from)
-    [next] = connected_neighbours(point, directions, matrix)
-    next
-  end
+  def get_connected_neighbour(point, :north, "L"), do: move(point, :east)
+  def get_connected_neighbour(point, :east, "L"), do: move(point, :north)
+  def get_connected_neighbour(point, :north, "|"), do: move(point, :south)
+  def get_connected_neighbour(point, :south, "|"), do: move(point, :north)
+  def get_connected_neighbour(point, :east, "-"), do: move(point, :west)
+  def get_connected_neighbour(point, :west, "-"), do: move(point, :east)
+  def get_connected_neighbour(point, :west, "7"), do: move(point, :south)
+  def get_connected_neighbour(point, :south, "7"), do: move(point, :west)
+  def get_connected_neighbour(point, :east, "F"), do: move(point, :south)
+  def get_connected_neighbour(point, :south, "F"), do: move(point, :east)
+  def get_connected_neighbour(point, :west, "J"), do: move(point, :north)
+  def get_connected_neighbour(point, :north, "J"), do: move(point, :west)
 
   def follow_path(stop_point, _, stop_point, path_so_far, _), do: [stop_point | path_so_far]
 
@@ -189,8 +196,10 @@ defmodule Day10 do
       # |> IO.inspect(label: "step cols")
       |> Enum.max()
 
+    step_map = step_list |> MapSet.new()
+
     0..max_row
-    |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_list |> MapSet.new()))
+    |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_map))
     |> Enum.sum()
   end
 
