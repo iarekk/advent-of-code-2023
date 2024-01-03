@@ -189,7 +189,9 @@ defmodule Day10 do
       # |> IO.inspect(label: "step cols")
       |> Enum.max()
 
-    0..max_row |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_list)) |> Enum.sum()
+    0..max_row
+    |> Enum.map(&horizontal_scan(&1, max_col, updated_matrix, step_list |> MapSet.new()))
+    |> Enum.sum()
   end
 
   def horizontal_scan(row_number, max_col, matrix, loop_definition) do
@@ -213,7 +215,7 @@ defmodule Day10 do
     #   "Scan Step #{inspect({row_index, col_index})}. Is inside: #{is_inside?}. Acc: #{acc}. Sym: #{sym}"
     # )
 
-    on_loop? = Enum.member?(loop_def, {row_index, col_index})
+    on_loop? = MapSet.member?(loop_def, {row_index, col_index})
 
     # TODO
     new_inside? =
