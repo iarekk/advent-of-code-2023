@@ -1,17 +1,17 @@
 defmodule Day10 do
   @start_symbol "S"
-  @directions [:north, :west, :south, :east]
+  @directions [:north, :west, :south, :east] |> MapSet.new()
   @symbol_types [
-    "|",
-    "-",
-    "L",
-    "J",
-    "7",
-    "F"
-  ]
+                  "|",
+                  "-",
+                  "L",
+                  "J",
+                  "7",
+                  "F"
+                ]
+                |> MapSet.new()
 
-  @up_corners ["L", "J"]
-  @down_corners ["7", "F"]
+  @corners_map %{"L" => :up, "J" => :up, "7" => :down, "F" => :down}
   @vpipe "|"
 
   def read_file(file_path) do
@@ -112,7 +112,7 @@ defmodule Day10 do
   end
 
   def make_step(point, arrived_from, matrix) do
-    directions = @directions -- [arrived_from]
+    directions = MapSet.delete(@directions, arrived_from)
     [next] = connected_neighbours(point, directions, matrix)
     next
   end
@@ -203,19 +203,18 @@ defmodule Day10 do
 
   def scan_step(
         is_inside?,
-        {row_index, col_index},
+        {row_index, col_index} = point,
         last_seen_corner_point,
         {matrix, loop_def, max_col},
         acc
       ) do
-    sym =
-      matrix[{row_index, col_index}]
+    sym = matrix[point]
 
     # IO.puts(
     #   "Scan Step #{inspect({row_index, col_index})}. Is inside: #{is_inside?}. Acc: #{acc}. Sym: #{sym}"
     # )
 
-    on_loop? = MapSet.member?(loop_def, {row_index, col_index})
+    on_loop? = MapSet.member?(loop_def, point)
 
     # TODO
     new_inside? =
@@ -249,9 +248,9 @@ defmodule Day10 do
     should_change?(is_on_loop?, is_pipe?, corner_direction, last_seen_corner_direction)
   end
 
-  def get_corner_direction(sym) when sym in @up_corners, do: :up
-  def get_corner_direction(sym) when sym in @down_corners, do: :down
-  def get_corner_direction(_), do: :none
+  def get_corner_direction(sym) do
+    Map.get(@corners_map, sym, :none)
+  end
 
   # not on the loop
   def should_change?(false, _, _, _), do: false
@@ -266,7 +265,8 @@ defmodule Day10 do
       )
 
   # rounding the corner with the same direction (e.g. L---J, so we don't cross the loop boundary)
-  def should_change?(true, false, dir, dir) when dir in [:up, :down], do: false
+  def should_change?(true, false, :up, :up), do: false
+  def should_change?(true, false, :down, :down), do: false
 
   # we've traversed past opposite corners (e.g. L---7), which means we cross the loop boundary
   def should_change?(true, false, :up, :down), do: true
