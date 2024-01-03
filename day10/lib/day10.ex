@@ -39,15 +39,6 @@ defmodule Day10 do
     {x, y}
   end
 
-  def find_rows_cols_count(matrix) do
-    keys = Map.keys(matrix)
-
-    row_indices = Enum.map(keys, fn {x, _} -> x end)
-    col_indices = Enum.map(keys, fn {_, y} -> y end)
-
-    {Enum.max(row_indices) + 1, Enum.max(col_indices) + 1}
-  end
-
   def move({x, y}, :north), do: {x - 1, y}
   def move({x, y}, :south), do: {x + 1, y}
   def move({x, y}, :west), do: {x, y - 1}
@@ -80,33 +71,18 @@ defmodule Day10 do
   def connections("F"), do: [:south, :east]
   def connections(_), do: []
 
-  defp are_connected_p?({x1, y1}, sym1, {x2, y2}, sym2) do
-    # direction point1 to point2
-    # |> IO.inspect(label: "direction 1 -> 2")
-    direction1to2 = direction(x2 - x1, y2 - y1)
-    # |> IO.inspect(label: "connections 1")
-    connections1 = connections(sym1)
-
-    point1_connects_to2 = is_connected?(direction1to2, connections1)
-
-    # |> IO.inspect(label: "direction 2 -> 1")
-    direction2to1 = direction(x1 - x2, y1 - y2)
-    # |> IO.inspect(label: "connections 2")
-    connections2 = connections(sym2)
-
-    point2_connects_to1 = is_connected?(direction2to1, connections2)
-
-    point1_connects_to2 and point2_connects_to1
-
-    # Enum.member?(connections1, direction1) and Enum.member?(connections2, direction2)
-  end
-
   defp is_connected?(direction, connections) do
     Enum.member?(connections, direction)
   end
 
   def are_connected?({x1, y1}, {x2, y2}, matrix) do
-    are_connected_p?({x1, y1}, matrix[{x1, y1}], {x2, y2}, matrix[{x2, y2}])
+    connects_to?({x1, y1}, {x2, y2}, matrix) and connects_to?({x2, y2}, {x1, y1}, matrix)
+  end
+
+  def connects_to?({x1, y1}, {x2, y2}, matrix) do
+    connections1 = connections(matrix[{x1, y1}])
+    direction1to2 = direction(x2 - x1, y2 - y1)
+    is_connected?(direction1to2, connections1)
   end
 
   def neighbours({x, y}, directions, matrix) do
@@ -118,21 +94,20 @@ defmodule Day10 do
   end
 
   def make_step({x, y}, arrived_from, matrix) do
-    directions = List.delete(@directions, arrived_from)
+    directions = @directions -- [arrived_from]
     [next] = connected_neighbours({x, y}, directions, matrix)
     next
   end
 
   def follow_path({x, y}, forbidden_direction, {stop_x, stop_y}, path_so_far, matrix) do
     {x_new, y_new} =
-      make_step({x, y}, forbidden_direction, matrix) |> IO.inspect(label: "new coords")
+      make_step({x, y}, forbidden_direction, matrix)
 
     if({x_new, y_new} == {stop_x, stop_y}) do
       [{x_new, y_new}, {x, y} | path_so_far]
     else
-      # this is a 'return' direction that we can't be taking from this cell
       new_forbidden_direction =
-        direction(x - x_new, y - y_new) |> IO.inspect(label: "new forbidden direction")
+        direction(x - x_new, y - y_new)
 
       follow_path(
         {x_new, y_new},
@@ -148,20 +123,13 @@ defmodule Day10 do
     {s_x, s_y} = find_start(matrix)
     all_neighbours = neighbours({s_x, s_y}, @directions, matrix)
 
-    [start, stop] = Enum.filter(all_neighbours, &is_connected_to_start?({s_x, s_y}, &1, matrix))
+    [start, stop] = Enum.filter(all_neighbours, &connects_to?(&1, {s_x, s_y}, matrix))
 
     {start_x, start_y} = start
 
     first_prohibited_direction =
-      direction(s_x - start_x, s_y - start_y) |> IO.inspect(label: "prohibited direction start")
+      direction(s_x - start_x, s_y - start_y)
 
     {start, first_prohibited_direction, stop, {s_x, s_y}}
-  end
-
-  def is_connected_to_start?({s_x, s_y}, {x, y}, matrix) do
-    directions_point = direction(s_x - x, s_y - y) |> IO.inspect(label: "direction s -> point")
-    connections_point = connections(matrix[{x, y}]) |> IO.inspect(label: "connections point")
-
-    is_connected?(directions_point, connections_point)
   end
 end
